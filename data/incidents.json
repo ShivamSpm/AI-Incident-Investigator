@@ -1,0 +1,55 @@
+[
+  {
+    "id": "payment-unreachable",
+    "title": "Checkout error rate increased",
+    "service": "checkout",
+    "alert": {"metric": "error_rate", "value": 0.35, "threshold": 0.05},
+    "dependencies": ["payment"],
+    "evidence": [
+      {
+        "id": "log-001",
+        "kind": "log",
+        "service": "checkout",
+        "target": "payment",
+        "code": "connection_refused",
+        "timestamp": "2026-10-12T12:01:00Z",
+        "message": "Connection to payment:8080 refused while processing checkout."
+      },
+      {
+        "id": "trace-001",
+        "kind": "trace",
+        "service": "checkout",
+        "target": "payment",
+        "code": "connection_refused",
+        "timestamp": "2026-10-12T12:01:00Z",
+        "message": "POST /charge failed with connection refused."
+      }
+    ]
+  },
+  {
+    "id": "healthy",
+    "title": "Checkout error rate within threshold",
+    "service": "checkout",
+    "alert": {"metric": "error_rate", "value": 0.01, "threshold": 0.05},
+    "dependencies": ["payment"],
+    "evidence": []
+  },
+  {
+    "id": "insufficient-evidence",
+    "title": "Checkout errors with missing trace data",
+    "service": "checkout",
+    "alert": {"metric": "error_rate", "value": 0.25, "threshold": 0.05},
+    "dependencies": ["payment"],
+    "evidence": [
+      {
+        "id": "log-002",
+        "kind": "log",
+        "service": "checkout",
+        "target": "payment",
+        "code": "connection_refused",
+        "timestamp": "2026-10-12T13:01:00Z",
+        "message": "Payment connection refused; correlated traces are unavailable."
+      }
+    ]
+  }
+]

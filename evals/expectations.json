@@ -1,0 +1,17 @@
+{
+  "payment-unreachable": {
+    "status": "suspected",
+    "affected_service": "payment",
+    "required_evidence_ids": ["log-001", "trace-001"]
+  },
+  "healthy": {
+    "status": "healthy",
+    "affected_service": null,
+    "required_evidence_ids": []
+  },
+  "insufficient-evidence": {
+    "status": "needs_more_evidence",
+    "affected_service": null,
+    "required_evidence_ids": []
+  }
+}

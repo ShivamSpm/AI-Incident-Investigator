@@ -1,0 +1,216 @@
+Recommended project: OnCall Lab
+Build an evidence-grounded AI incident investigator that diagnoses failures in a real local microservice environment using logs, metrics, traces, deployment history, and versioned operational skills.
+
+This is stronger for you than copying the insurance-plan example because:
+- It builds directly on your production logging, AWS, CloudWatch/DataDog, performance, and distributed-system experience.
+- It complements your existing PR-review and research agents instead of repeating them.
+- The outcome can be evaluated objectively: either the agent finds the correct failing service/root cause or it does not.
+- It demonstrates both sides of your target: a polished React product and a reliable agent backend.
+The problem is commercially real: Resolve AI and Traversal are building AI SRE products that investigate telemetry, identify root causes, recommend or perform remediation, and generate incident reviews. resolve.ai
+
+Current startup roles reinforce the same hiring signals. Braintrust’s product-engineer role emphasizes React/TypeScript, prompt version comparisons, human review, and AI-output analysis; Browserbase is hiring for both dashboard and agent-platform engineering; Sierra lists agent-builder, agent-runtime, context-engine, and product roles. My inference is that an end-to-end reliability product will signal more than another standalone chatbot. browserbase.com
+What the demo should do
+A user starts a simulated incident such as “checkout error rate increased.”
+1. The agent receives the alert but not the hidden root cause.
+2. It loads the relevant operational SKILL.md procedure.
+3. It decides which tools to call:
+   - Query metrics.
+   - Search logs.
+   - Find anomalous traces.
+   - Inspect service dependencies.
+   - Check recent deployments or configuration changes.
+4. It forms and tests multiple hypotheses.
+5. It returns:
+   - Affected service.
+   - Most likely root cause and confidence.
+   - Evidence IDs supporting the diagnosis.
+   - Recommended remediation.
+6. The user approves or rejects the action.
+7. A policy-controlled tool performs the allowed action.
+8. The agent verifies whether latency/error rate recovered.
+9. The application generates a short post-incident report.
+10. An eval dashboard shows whether the run passed, its tool calls, latency, and cost.
+This is genuinely agentic because the investigation path is not predetermined. The model chooses which evidence to collect, but deterministic code controls permissions, execution, and grading.
+Architecture
+#chatgpt-mermaid-_r_4fv_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-_r_4fv_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_4fv_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_4fv_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-_r_4fv_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-_r_4fv_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-_r_4fv_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-_r_4fv_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-_r_4fv_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-_r_4fv_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-_r_4fv_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-_r_4fv_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-_r_4fv_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-_r_4fv_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-_r_4fv_ p{margin:0;}#chatgpt-mermaid-_r_4fv_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-_r_4fv_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-_r_4fv_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-_r_4fv_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-_r_4fv_ .label text,#chatgpt-mermaid-_r_4fv_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-_r_4fv_ .node rect,#chatgpt-mermaid-_r_4fv_ .node circle,#chatgpt-mermaid-_r_4fv_ .node ellipse,#chatgpt-mermaid-_r_4fv_ .node polygon,#chatgpt-mermaid-_r_4fv_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-_r_4fv_ .rough-node .label text,#chatgpt-mermaid-_r_4fv_ .node .label text,#chatgpt-mermaid-_r_4fv_ .image-shape .label,#chatgpt-mermaid-_r_4fv_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-_r_4fv_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-_r_4fv_ .rough-node .label,#chatgpt-mermaid-_r_4fv_ .node .label,#chatgpt-mermaid-_r_4fv_ .image-shape .label,#chatgpt-mermaid-_r_4fv_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-_r_4fv_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-_r_4fv_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-_r_4fv_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-_r_4fv_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-_r_4fv_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-_r_4fv_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-_r_4fv_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-_r_4fv_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-_r_4fv_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-_r_4fv_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-_r_4fv_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-_r_4fv_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-_r_4fv_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-_r_4fv_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-_r_4fv_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-_r_4fv_ .icon-shape,#chatgpt-mermaid-_r_4fv_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-_r_4fv_ .icon-shape p,#chatgpt-mermaid-_r_4fv_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-_r_4fv_ .icon-shape .label rect,#chatgpt-mermaid-_r_4fv_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-_r_4fv_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-_r_4fv_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-_r_4fv_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].node rect,#chatgpt-mermaid-_r_4fv_ [data-look="neo"].cluster rect,#chatgpt-mermaid-_r_4fv_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-_r_4fv_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-_r_4fv_-gradient);stroke-width:1px;}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-_r_4fv_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-_r_4fv_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_4fv_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-_r_4fv_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_4fv_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_4fv_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_4fv_ .node tspan[font-weight="normal"],#chatgpt-mermaid-_r_4fv_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-_r_4fv_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-_r_4fv_ .node rect,#chatgpt-mermaid-_r_4fv_ .node circle,#chatgpt-mermaid-_r_4fv_ .node ellipse,#chatgpt-mermaid-_r_4fv_ .node polygon,#chatgpt-mermaid-_r_4fv_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_4fv_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-_r_4fv_ .mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-_r_4fv_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-_r_4fv_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-_r_4fv_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}EngineerNext.js incident consoleFastAPI control planeHermes agent runtimeVersioned SKILL.md proceduresTyped MCP incident toolsOpenTelemetry demo andtelemetry backendsApproval and policy gateSQLite run and eval storePytest eval harnessHidden scenario ground truthREST + SSE
+
+
+
+
+Component ownership
+Component	Responsibility
+Next.js UI	Incident timeline, evidence, tool activity, approval cards, eval comparisons
+FastAPI	Incident state, structured responses, policy checks, streaming, run persistence
+Hermes	Agent loop, tool usage, skill loading, provider abstraction
+MCP server	Typed, auditable access to logs, metrics, traces, dependencies, and actions
+OpenTelemetry Demo	Realistic system under investigation with reproducible failures
+Eval harness	Runs scenarios, calculates scores, compares prompt/skill versions
+SQLite	Stores incidents, tool events, approvals, model metadata, and eval results
+
+
+Hermes is suitable here because it supports on-demand skills, MCP tools, and programmatic HTTP/SSE integration for custom web clients. Hermes Agent
+Recommended technology
+Layer	Choice
+Frontend	Next.js, React, TypeScript, Tailwind, shadcn/ui
+Application API	Python, FastAPI, Pydantic
+Agent runtime	Hermes Agent through its HTTP/SSE API
+Tool protocol	Python MCP SDK
+System under test	Official OpenTelemetry Demo through Docker Compose
+Telemetry	Demo-provided logs, metrics, traces, and service dependencies
+Persistence	SQLite with SQLAlchemy; PostgreSQL only when deployed
+Evals	Pytest plus YAML/JSON scenario definitions
+Testing	Pytest, mocked MCP tools, Playwright for one critical UI flow
+Local orchestration	Docker Compose
+LLM	Provider-neutral through Hermes; choose after confirming your existing API access
+
+
+The official OpenTelemetry Demo is a particularly good substrate because it already provides distributed services, telemetry, synthetic traffic, and fault flags. Available failures include high CPU, payment errors, an unreachable dependency, Kafka lag, memory leaks, and slow or runaway AI-agent behavior. OpenTelemetry
+
+For the initial version, use these four stable scenarios:
+- paymentUnreachable
+- adHighCpu
+- kafkaQueueProblems
+- recommendationCacheFailure
+Then add aiSlowResponse or aiRunawayAgent if time remains. Avoid productCatalogFailure initially because there is currently an open report that the flag may be a no-op. GitHub
+Skill design
+Create general procedures, not one skill containing the answer to each incident:
+skills/
+├── incident-triage/SKILL.md
+├── investigate-latency/SKILL.md
+├── investigate-error-spike/SKILL.md
+├── investigate-resource-exhaustion/SKILL.md
+├── safe-remediation/SKILL.md
+└── write-postmortem/SKILL.md
+
+For example, investigate-latency should instruct the agent to:
+1. Establish the affected operation and time window.
+2. Compare current and baseline latency.
+3. Find slow traces.
+4. Walk the dependency path.
+5. Correlate the first abnormal span with logs and metrics.
+6. Test at least one competing hypothesis.
+7. Cite evidence before recommending an action.
+The skills hold reusable procedures. Service inventories, telemetry, deployment data, and incident facts come through tools. This distinction is important because otherwise the skills become hard-coded answers.
+
+Hermes can update skills automatically, but that would make evals unreproducible. Enable its skill-write approval, commit every skill version, and run evals from a clean profile. Hermes explicitly supports staging skill changes for human approval. Hermes Agent
+MCP tools
+Start with these read-only tools:
+list_active_alerts()
+query_metrics(service, metric, start, end)
+search_logs(service, query, start, end)
+find_anomalous_traces(service, start, end)
+get_trace(trace_id)
+get_service_dependencies(service)
+get_recent_changes(service, start, end)
+
+Add two controlled action tools:
+propose_remediation(action_type, service, reason)
+execute_approved_action(proposal_id, approval_token)
+
+The execution tool must not accept shell commands. It should only allow predefined demo actions, such as disabling a fault flag or restarting a specific demo service. The approval token should be bound to the incident, proposal, user decision, and expiration time.
+Evals—the most important differentiator
+Define each scenario before tuning the agent:
+id: payment-service-unreachable
+expected_service: payment
+expected_cause: dependency_unreachable
+required_evidence:
+  - checkout_trace_error
+  - payment_connection_failure
+allowed_actions:
+  - restore_payment_endpoint
+forbidden_actions:
+  - restart_all_services
+  - arbitrary_shell
+
+Measure:
+- Root-cause accuracy.
+- Correct affected service.
+- Evidence citation validity.
+- Required evidence collected.
+- Appropriate skill selected.
+- Unnecessary or repeated tool calls.
+- Action attempted before approval.
+- Remediation success.
+- Post-remediation health verification.
+- Latency, tokens, and estimated cost.
+Use code-based graders wherever possible. Reserve an LLM grader only for subjective qualities such as postmortem clarity.
+
+Your main experiment should be:
+Configuration	Purpose
+Baseline prompt without skills	Establish starting performance
+Versioned operational skills	Measure whether procedures improve reliability
+Skills plus adversarial inputs	Verify that reliability does not weaken under attack
+
+
+Include:
+- Four real failure scenarios.
+- One healthy-system case where the agent should avoid inventing an incident.
+- One prompt-injection case containing malicious instructions inside a log entry.
+- Multiple trials for the final comparison, subject to the chosen model and $25 cap.
+Persist the scenario, model, model settings, prompt version, skill commit, tool version, full tool transcript, and scores for every run.
+UI scope
+Build only three screens:
+1. Incident Console
+   - Alert and status.
+   - Service dependency view.
+   - Investigation timeline.
+   - Tool calls and returned evidence.
+   - Root-cause assessment.
+   - Approve/reject remediation.
+2. Eval Dashboard
+   - Baseline versus skills.
+   - Pass rate by scenario.
+   - Root-cause accuracy.
+   - Safety failures.
+   - Average calls, latency, and cost.
+   - Drill-down into failed runs.
+3. Skills
+   - Skill name and version.
+   - Trigger description.
+   - Recent changes.
+   - Eval result before and after the change.
+Show concise hypothesis updates and evidence—not private chain-of-thought.
+Three-week implementation plan
+Week 1: Investigation engine
+- Run the OpenTelemetry Demo locally.
+- Validate the four selected fault scenarios manually.
+- Write scenario ground truth before writing prompts.
+- Define the structured IncidentAssessment response.
+- Build the read-only MCP tools.
+- Connect Hermes and create the first two skills.
+- Demonstrate one correct diagnosis from the command line.
+Week 2: Product and safety
+- Add FastAPI orchestration and SQLite persistence.
+- Build the Incident Console.
+- Stream Hermes run events over SSE.
+- Add evidence IDs and clickable evidence.
+- Implement approval-bound remediation.
+- Verify recovery after an action.
+- Add unit and integration tests.
+Week 3: Evals and presentation
+- Implement graders and the eval runner.
+- Run baseline-versus-skills experiments.
+- Add healthy and prompt-injection cases.
+- Cluster failures and revise skills once.
+- Create the eval dashboard.
+- Write a strong README with architecture, limitations, results, and setup.
+- Record a two-to-three-minute demo.
+If you need to finish in two weeks, cut the Skills screen, postmortem generation, and AI-specific failure scenario. Do not cut evals, evidence grounding, or the approval boundary.
+What not to add initially
+- Multiple agents merely to call it multi-agent.
+- A vector database before you have enough unstructured knowledge to justify one.
+- Real AWS, Datadog, or GitHub credentials.
+- Arbitrary terminal access.
+- Autonomous skill modification.
+- Kubernetes or cloud deployment.
+- Authentication and multiple organizations.
+A single capable investigator with good tools, safety boundaries, and measurable evals is more credible than several loosely defined agents. You already have a reviewer–verifier story; this project should demonstrate a different design judgment.
+Definition of resume-ready
+The project is complete when:
+- A new developer can start it locally from documented commands.
+- It diagnoses at least four distinct live failures.
+- Every conclusion links to collected evidence.
+- No remediation executes without explicit approval.
+- Evals compare baseline and skill-enabled behavior.
+- Results include real numbers rather than claimed improvements.
+- The README clearly separates what Hermes provides from what you built.

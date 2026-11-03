@@ -2,6 +2,12 @@
 
 **Status: In progress — initial Python baseline and evaluation scaffold.**
 
+The [project plan](PROJECT_PLAN.md) contains a proposed seven-day implementation
+sequence with daily acceptance checks. See the [status and open decisions](docs/project-status.md)
+before starting a day, and the [architecture](docs/architecture.md) for component
+ownership and the original supplied diagram. Calendar feasibility and final scope
+remain pending user decisions; the implementation days have not started.
+
 An ongoing project to build an AI agent that investigates service failures by
 correlating logs, metrics, traces, and service dependencies. The intended product
 will return evidence-linked diagnoses and support human-approved remediation.
@@ -85,6 +91,9 @@ will be added when an LLM and executable action tools are integrated.
 
 ## Next implementation step
 
-Keep `investigate(incident)` and the `InvestigationResult` contract stable. Add a
-Hermes-backed implementation, then compare it with this baseline using the same
-evaluation cases. Extend the cases before tuning prompts or skills.
+Follow [Day 1 of the project plan](PROJECT_PLAN.md#day-1-reproducible-lab-and-scenario-contracts):
+confirm the required setup decisions, validate the live demo and fault scenarios,
+and define hidden ground truth and contracts before tuning prompts. Preserve the
+starter investigation interface through an explicit adapter if the richer runtime
+requires a new contract. Later evals will distinguish this deterministic reference
+from the LLM-without-skills and LLM-with-skills comparisons.

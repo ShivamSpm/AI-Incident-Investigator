@@ -2,11 +2,12 @@
 
 **Status: In progress — initial Python baseline and evaluation scaffold.**
 
-The [project plan](PROJECT_PLAN.md) contains a proposed seven-day implementation
-sequence with daily acceptance checks. See the [status and open decisions](docs/project-status.md)
-before starting a day, and the [architecture](docs/architecture.md) for component
-ownership and the original supplied diagram. Calendar feasibility and final scope
-remain pending user decisions; the implementation days have not started.
+The [project plan](PROJECT_PLAN.md) defines 12 implementation milestones with
+acceptance checks. Quality takes priority over milestone count; seven is not a
+limit. See the [status and decisions](docs/project-status.md),
+[verified local environment](docs/dev-environment.md), and
+[architecture](docs/architecture.md) before implementation. The total project API
+spending ceiling is $100. Implementation milestones have not started.
 
 An ongoing project to build an AI agent that investigates service failures by
 correlating logs, metrics, traces, and service dependencies. The intended product
@@ -91,9 +92,9 @@ will be added when an LLM and executable action tools are integrated.
 
 ## Next implementation step
 
-Follow [Day 1 of the project plan](PROJECT_PLAN.md#day-1-reproducible-lab-and-scenario-contracts):
-confirm the required setup decisions, validate the live demo and fault scenarios,
-and define hidden ground truth and contracts before tuning prompts. Preserve the
-starter investigation interface through an explicit adapter if the richer runtime
-requires a new contract. Later evals will distinguish this deterministic reference
-from the LLM-without-skills and LLM-with-skills comparisons.
+Follow [Milestone 1 of the project plan](PROJECT_PLAN.md#milestone-1-reproducible-local-lab):
+verify the Docker engine, run a pinned demo with observability, and measure actual
+local resource use. Later milestones validate faults and hidden ground truth before
+prompt tuning, build evidence inspection and approval-controlled recovery, and
+compare LLM behavior with and without skills. The user will build the portfolio
+website separately; this repository focuses on the application.

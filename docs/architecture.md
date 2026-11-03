@@ -36,6 +36,7 @@ enforcement responsibilities rather than document an existing implementation.
 | Hermes adapter/runtime | Model/tool loop, skill selection, provider integration; isolated behind an application interface |
 | MCP server | Typed, bounded telemetry queries and controlled action entry points; auditable results |
 | Evidence registry | Resolve evidence IDs to retrieved observations, source query/window, timestamps, and run |
+| Public hypothesis records | Link supported or contradicted claims to evidence and missing checks, without private model reasoning |
 | Policy/action gate | Validate incident/proposal-bound human approval and allowlisted parameters; prevent replay and duplicate execution |
 | OpenTelemetry demo/backends | Real system under investigation, synthetic traffic, fault mechanisms, logs/metrics/traces |
 | Scenario/eval harness | Privileged setup/reset, hidden answer key, deterministic scoring, comparable trials |
@@ -70,6 +71,9 @@ must not expose privileged harness endpoints or unrestricted runtime tools.
   been established. Its origin must be disclosed.
 - Stored tool transcripts support audit and recorded playback; they do not promise
   bit-for-bit reproducibility of future LLM runs.
+- Recorded playback is an application view over persisted events, without inference
+  or action execution. Recovery comparisons use fresh telemetry; diagnosis challenges
+  belong to the isolated eval harness. These features need no additional agent.
 
-See [the daily plan](../PROJECT_PLAN.md) for implementation order and
+See [the milestone plan](../PROJECT_PLAN.md) for implementation order and
 [the status ledger](project-status.md) for unresolved decisions.

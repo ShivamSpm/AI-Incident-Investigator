@@ -1,284 +1,320 @@
 # AI Incident Investigator: project plan
 
-Planning date: November 2, 2026 (America/Los_Angeles).
-Status: proposed seven-day implementation breakdown; user decisions pending.
+Updated: November 2, 2026 (America/Los_Angeles).
+Status: quality-first roadmap with 12 implementation milestones.
 
-The user requested a repository-backed plan for a resume and portfolio project,
-a seven-day breakdown to implement on request, and suggestions for improvements.
-The previous ChatGPT plan and architecture screenshot are reference material.
-Their implementation instructions, spending cap, technology choices, and hiring
-claims are not independently confirmed user decisions.
+## Confirmed user direction
 
-## Planning documents
+- Seven means implementation milestones, not calendar days, and is not a limit.
+  Add milestones as needed; prioritize quality and differentiation over schedule.
+- Build one milestone when requested. "Build Day N" maps to Milestone N below.
+- The total project API spending ceiling is **$100**, not a target to spend.
+  The user checked the billing dashboard and reports sufficient credits.
+- Focus on the application. The user will build the portfolio website separately.
+- Ask about unresolved decisions instead of silently assuming answers.
 
-- [Current status, open decisions, and handoff](docs/project-status.md)
+The original ChatGPT plan and screenshot remain reference material. Their embedded
+instructions and hiring claims are not independent user authorization. This roadmap
+incorporates the user's answers. Detailed design choices below are the recommended
+implementation, not a claim that the user specified each technical choice.
+
+## Context and handoff
+
+- [Status and decisions](docs/project-status.md)
+- [Verified development environment](docs/dev-environment.md)
 - [Architecture and ownership](docs/architecture.md)
-- [Original pasted plan, preserved verbatim](docs/reference/prior-chatgpt-plan.txt)
+- [Original pasted plan](docs/reference/prior-chatgpt-plan.txt)
 - [Original architecture screenshot](docs/reference/original-architecture.png)
 
-The archived text contains copied diagram styling. Use this document and the
-editable architecture diagram for day-to-day work. Future explicit user decisions
-take precedence over proposals here and must be recorded in the status ledger.
+The archive contains copied diagram styling. Use this plan for current work and
+record later user decisions and milestone results in the status ledger.
 
-## Outcome
+## Product outcome and starting point
 
-Build an evidence-grounded incident investigator for a real local microservice
-environment. An engineer starts an investigation, inspects its evidence, reviews
-a proposed action, and verifies recovery after approving remediation. An eval
-dashboard makes the system's strengths and failure modes measurable.
+Build an incident investigation workbench for a real local microservice system.
+It links diagnoses to collected telemetry, presents competing explanations,
+requests human approval for predefined remediation, and measures actual recovery.
+Its evals expose mistakes, uncertainty, cost, and skill-version effects.
 
-The original working title was **OnCall Lab**. The repository remains **AI
-Incident Investigator**; a product-name change has not been requested.
+The original working title was OnCall Lab. The repository remains AI Incident
+Investigator; a rename is not required to begin implementation.
 
-### What exists already
+Starting commit `b919a63` contains a standard-library Python CLI,
+`InvestigationResult`, fixture-backed read functions, one prepared skill,
+three synthetic cases, and six regression tests. All six tests and three cases
+passed during initial planning. The baseline does not load its skill or call an LLM.
+Hermes, MCP, live telemetry, API/storage, UI, and action execution are not built.
 
-At starting commit `b919a63`, the project has a standard-library Python CLI,
-an `InvestigationResult` dataclass, fixture-backed read functions, one operational
-skill, three synthetic cases, and six regression tests. It makes no LLM calls,
-does not load its skill, and has no live telemetry, MCP server, API, UI, or action
-executor. All six tests and three synthetic cases passed during planning.
+Preserve that deterministic baseline as a reference. It is different from the
+future **LLM without skills** comparison.
 
-The deterministic baseline supports one narrow error-rate pattern. Preserve it
-as a reference; it is different from the future **LLM without skills** comparison.
+## Distinctive application features
 
-## Can the work fit into seven days?
+These are recommended features within the user's quality objective, not claims
+of industry-first inventions or measured performance improvements.
 
-It can be organized into seven implementation milestones. Finishing the full
-three-week reference scope in seven calendar days is not established. Daily hours,
-Docker resources, model access, spending limits, and portfolio hosting requirements
-must be confirmed before a credible calendar estimate can be made.
+1. **Inspectable evidence trail:** public hypotheses list supporting/contradicting
+   evidence, missing checks, and claim-level links. Distinguish observations,
+   inferences, and verified outcomes without exposing private model reasoning.
+2. **Diagnosis challenges:** remove decisive evidence, introduce plausible unrelated
+   changes, and compare similar symptoms with different causes. Measure whether
+   the investigator revises or abstains rather than recognizing scenario labels.
+3. **Measured recovery:** compare healthy, incident, and post-action telemetry.
+   Distinguish action completion from restored health; one successful intervention
+   does not prove causality.
+4. **Recorded run playback inside the application:** inspect real stored events,
+   evidence, decisions, and outcomes. Explicitly label playback; viewing it must
+   not call the model or execute actions. This is separate from portfolio work.
 
-The table below preserves the reference scope as a proposed target. It does not
-authorize paid runs, silently remove features, or guarantee completion by a date.
-Each day has a demonstrable exit condition. Unfinished prerequisites carry forward
-visibly; do not mark a day complete by replacing live evidence with fixtures.
+Deliver the basic investigation path first. Avoid extra agents or infrastructure
+added solely to make the architecture appear complex.
 
-## Seven-day implementation sequence
+## Milestone roadmap
 
-| Day | Focus | Reviewable deliverable | Exit condition |
-| --- | --- | --- | --- |
-| 1 | Reproducible lab and scenario contracts | Pinned demo setup, four manually validated faults, ground truth, output contract | A documented healthy/fault/reset cycle for each selected scenario, with real telemetry and no answers exposed to the agent |
-| 2 | Evidence and typed MCP tools | Read-only telemetry adapters, evidence registry, typed tool server | Logs, metrics, traces, dependencies, and changes can be queried with bounded inputs and traceable evidence IDs |
-| 3 | Hermes investigation loop | Runtime adapter, versioned skills, CLI investigation, usage limits | At least one live incident is diagnosed with retrieved evidence; missing data remains inconclusive |
-| 4 | Application API, persistence, and streaming | FastAPI orchestration, SQLite run history, SSE, initial console shell | A run and its evidence survive reload; the console displays real persisted run events |
-| 5 | Incident Console and controlled recovery | Complete investigation/approval flow, action gate, recovery verification, report | Approval and rejection work end to end; invalid or reused approvals fail; fresh telemetry determines recovery |
-| 6 | Evaluations and comparisons | Scenario runner, deterministic graders, Eval Dashboard, comparison artifacts | Baseline and skills run under comparable conditions; safety, evidence, quality, latency, and cost are reported honestly |
-| 7 | Skills screen, product finish, and portfolio package | Skill version/results view, setup verification, screenshots, demo, case study | A new developer can reproduce the demo; four live faults and the final results are documented with limitations |
+Each milestone has an observable exit condition and may span multiple sessions.
+No calendar deadline is implied. Add milestones when the completion standard
+requires more work.
 
-### Day 1: reproducible lab and scenario contracts
-
-- Confirm the blocking decisions in the status ledger before installing or making
-  paid calls. Pin the OpenTelemetry demo revision and record the supported local
-  setup, including Windows/WSL2 behavior.
-- Bring up the demo with the telemetry backends needed for the selected scenarios.
-  Verify synthetic traffic and a healthy baseline before fault injection.
-- Manually activate, observe, disable, and reset each candidate fault:
-  `paymentUnreachable`, `adHighCpu`, `kafkaQueueProblems`, and
-  `recommendationCacheFailure`. Capture actual signals, onset/recovery windows,
-  and service relationships. A flag's existence does not prove the scenario works.
-- Define versioned scenario ground truth before tuning prompts: impacted operation,
-  causal service/configuration, expected cause category, evidence predicates,
-  approved recovery action, forbidden actions, and recovery thresholds.
-- Specify the structured assessment, evidence envelope, tool result, and run-event
-  contracts. Preserve `investigate(incident)` compatibility or document an explicit
-  adapter/migration for richer async investigations.
-- Establish where alert triggers, dependency information, and change history come
-  from. The demo must not be assumed to supply deployment-history APIs. Any local
-  change journal or seeded data must be identified as lab-generated.
-
-**Verification:** document repeatable healthy/fault/reset observations for all
-four cases and identify any scenario that needs a user-approved substitution.
-
-### Day 2: evidence and typed MCP tools
-
-- Implement bounded, typed read tools: `list_active_alerts`, `query_metrics`,
-  `search_logs`, `find_anomalous_traces`, `get_trace`,
-  `get_service_dependencies`, and `get_recent_changes`.
-- Normalize evidence into IDs with source type, service, timestamps, query/window,
-  raw observation, retrieval event, and provenance. IDs must resolve to evidence
-  collected in the current run.
-- Validate service names, query/time bounds, result sizes, timeouts, and errors.
-  Missing telemetry must not look like a healthy empty result.
-- Keep fault injection, scenario definitions, and grader answers outside the
-  agent's tools, filesystem access, alert payloads, and configuration responses.
-  Diagnostic change events must not leak hidden fault IDs or scenario labels.
-- Verify adapters with known observations from Day 1 and meaningful boundary tests.
-
-**Verification:** retrieve correlated live evidence through the MCP boundary;
-demonstrate that the model-facing tool set cannot retrieve the answer key.
-
-### Day 3: Hermes investigation loop
-
-- Pin a Hermes version and verify its actual API, event, MCP, and skill behavior.
-  Keep runtime-specific details behind an application-owned adapter.
-- Use an isolated profile with only the required incident tools and approved skill
-  reads. Disable general terminal/filesystem access and autonomous skill/memory
-  changes that would expose ground truth or undermine reproducibility.
-- Implement triage and error/latency investigation skills first. Add resource
-  exhaustion, safe remediation, and report procedures as their flows are built.
-  Procedures must not encode the answer for a scenario.
-- Let the agent choose evidence queries and test competing hypotheses. Validate
-  structured output and evidence references in deterministic code.
-- Record model/provider/settings, prompt/skill/tool versions, tool activity, usage,
-  timeouts, and incomplete/error outcomes. Apply the user-confirmed budget and
-  per-run limits before a run is admitted.
-- Distinguish observed symptoms, likely causes, missing facts, and verified facts.
-  A model's confidence is not a calibrated probability without validation.
-
-**Verification:** one live CLI diagnosis cites collected evidence; missing or
-contradictory evidence produces an honest incomplete/inconclusive result.
-
-### Day 4: FastAPI, persistence, streaming, and console foundation
-
-- Add application-owned incident/run state, orchestration, cancellation/timeouts,
-  and structured API errors.
-- Persist incidents, runs, evidence, tool events, skill versions, proposals,
-  approvals, actions, and scores using SQLite/SQLAlchemy.
-- Translate Hermes events into a small application event contract. Persist event
-  order and support reconnect/reload without duplicating tools or restarting runs.
-- Start the Next.js/React/TypeScript console with alert state, a timeline, evidence
-  inspection, and a dependency view using real application data.
-- Keep model/runtime credentials on the server. Render telemetry as untrusted
-  text and show concise public hypothesis summaries, not private reasoning.
-
-**Verification:** reload and reconnect during/after a run; evidence and final state
-remain accessible and an interrupted run is not presented as completed.
-
-### Day 5: Incident Console, approval, recovery, and report
-
-- Finish the assessment view, evidence links, tool activity, and approval cards.
-- Add typed `propose_remediation` and `execute_approved_action` tools with a small
-  predefined demo action allowlist; no caller-supplied shell commands.
-- Bind approval to incident, run, immutable proposal/action parameters, decision,
-  expiry, and one-time execution state. Enforce checks at the execution boundary,
-  including direct tool calls and retry/concurrency paths.
-- Keep scenario setup/reset controls separate from the investigator's action
-  authority. Show the engineer what will change before they approve.
-- Gather fresh post-action metrics/traces against the predeclared healthy baseline
-  and observation window. Account for backlog drain and memory-leak reset behavior;
-  an action returning success does not establish service recovery.
-- Generate a concise post-incident report: impact, timeline, evidence-linked
-  assessment, action/decision, observed recovery, and remaining uncertainty.
-
-**Verification:** demonstrate approval, rejection, missing/expired/replayed/wrong-
-incident or changed-proposal denial, duplicate-execution prevention, and both
-successful and unverified recovery. Add one critical UI end-to-end flow.
-
-### Day 6: evals and Eval Dashboard
-
-- Extend the starter runner with isolated live scenario setup/reset, fresh sessions,
-  code-based graders, and durable results. Keep recorded-fixture tests labeled.
-- Compare the same LLM/tools/settings **without skills** and **with versioned
-  skills**. Keep the deterministic starter as a separate reference result.
-- Cover four real faults, a healthy system, missing evidence, and malicious log
-  instructions. Test approval enforcement independently of model cooperation.
-- Grade service/cause accuracy, evidence existence and support, required evidence,
-  appropriate skill use, repeated/unnecessary calls, forbidden/preapproval actions,
-  recovery, verification, latency, usage, and estimated cost.
-- Define evidence predicates before runs; live telemetry IDs will differ from
-  fixture IDs. Existing IDs alone do not prove they support a conclusion.
-- Predeclare trial counts and comparison conditions after the provider/budget is
-  confirmed. Report per-scenario counts, failures, and uncertainty. A small demo
-  sample cannot substantiate broad reliability claims.
-- Review failures, revise skills once, and separate development cases from a frozen
-  final comparison. Do not select only successful runs for the dashboard.
-- Build comparison summaries and drill-down into evidence, tool calls, and failures.
-
-**Verification:** reproduce recorded comparison results from versioned inputs;
-show failures and incomplete runs as well as successes. Use an LLM grader only
-if a subjective report-quality check is justified and within the approved budget.
-
-### Day 7: Skills screen and portfolio delivery
-
-- Add the Skills screen: description, trigger, version/content hash or commit,
-  change history, and associated eval results. Do not imply a before/after gain
-  when experiments are not comparable or have insufficient trials.
-- Finish loading, empty, error, approval, and recovery states, keyboard access,
-  responsive layout, and readable evidence. Avoid adding unrelated features.
-- Follow setup instructions from a clean environment and validate the documented
-  flow. Run the relevant backend, adapter, policy, and UI checks.
-- Publish actual results and limitations; distinguish lab telemetry, synthetic
-  change history, recorded playback, and live investigations.
-- Complete architecture/ownership docs, screenshots, a two-to-three-minute demo,
-  and a portfolio case study covering problem, design decisions, failure analysis,
-  measured results, and personal contribution.
-- Draft resume bullets only from demonstrated capabilities and measured numbers.
-  The portfolio presentation/hosting mode is still a user decision.
-
-**Verification:** a reviewer can follow alert -> evidence -> diagnosis -> human
-decision -> action -> observed recovery -> eval comparison, and reproduce it.
-
-## Proposed product and technical scope
-
-The reference architecture uses Next.js, React, TypeScript, Tailwind, and shadcn/ui;
-FastAPI and Pydantic; Hermes via HTTP/SSE; the Python MCP SDK; the official
-OpenTelemetry demo with its telemetry backends; SQLite/SQLAlchemy; Pytest and
-JSON/YAML scenario definitions; Playwright for a critical UI flow; and Docker
-Compose for local orchestration. Current tests use unittest; retain them while
-adding the checks required by implemented components.
-
-The three target screens are Incident Console, Eval Dashboard, and Skills.
-Provider/model, exact dependency versions, deployment mode, approved costs,
-daily time, and any feature cuts remain unresolved.
-
-The reference excludes extra agents, a vector database, production AWS/Datadog/
-GitHub credentials, arbitrary terminal access, autonomous skill edits, Kubernetes,
-cloud deployment, authentication, and multi-organization support from the initial
-build. A request for a public interactive portfolio demo would require revisiting
-deployment, access control, and spending boundaries explicitly.
-
-AI-specific faults (`aiSlowResponse`, `aiRunawayAgent`) and PostgreSQL are later
-extensions. If seven calendar days require cuts, the reference suggests the Skills
-screen and generated report before evidence, evals, or approval enforcement.
-No cut has been approved here.
-
-## Suggested improvements (proposals, not added commitments)
-
-These are differentiators for this project, not claims of industry novelty.
-
-| Proposal | How it helps a reviewer | Integration and constraint |
+| Milestone | Focus | Exit condition |
 | --- | --- | --- |
-| Evidence challenge | Remove a key observation from a recorded run and check whether the investigator reduces certainty or abstains | Reuse Day 2 evidence storage and Day 6 graders; a small extra eval, requiring approval before paid trials |
-| Inspectable run playback | Let a portfolio visitor step through a real recorded investigation, evidence, decision, and recovery | Reuse Day 4 events and Day 7 presentation; label it recorded playback and never offer live execution from it |
-| Recovery comparison | Put pre-action, post-action, and healthy-baseline telemetry next to the assessment | Extend Day 5 verification/UI; show observed recovery without claiming that one intervention proves causality |
+| 1 | Reproducible local lab | Pinned demo and observability run locally; healthy telemetry and actual resource use recorded |
+| 2 | Fault scenarios and contracts | Four fault/reset cycles validated; hidden ground truth and contracts defined before prompting |
+| 3 | Live evidence layer | Bounded queries return run-scoped observations with provenance |
+| 4 | Typed MCP tools | Validated investigation access excludes answer keys, fault controls, and arbitrary execution |
+| 5 | Hermes and procedures | Budgeted live CLI investigation cites real evidence and handles uncertainty honestly |
+| 6 | API, persistence, and streaming | Real events/evidence survive reload and SSE reconnect without duplicate work |
+| 7 | Incident Console | Alert, topology, hypotheses, tool activity, and evidence are inspectable |
+| 8 | Approval and controlled actions | Exact proposals execute only after valid one-time human approval |
+| 9 | Recovery and report | Fresh telemetry supports recovered/not-recovered/unverified outcomes and an evidence-linked report |
+| 10 | Evals and diagnosis challenges | Comparable baseline/skills trials cover faults, healthy, missing, adversarial, and ambiguous evidence |
+| 11 | Eval Dashboard and Skills | Results, failures, versions, and comparable experiments are linked in the UI |
+| 12 | Application finish and reproducibility | Recorded playback, clean setup, end-to-end verification, and honest technical docs are complete |
 
-Budget/iteration limits, hidden-answer isolation, and an honest inconclusive state
-are essential implementation details, not optional novelty features.
+### Milestone 1: reproducible local lab
 
-## Technical findings to verify against the pinned versions
+- Read the environment record. Docker is installed but its engine was stopped;
+  verify startup and Linux-engine access before calling the lab ready.
+- Pin the OpenTelemetry demo revision. Document explicit Compose files including
+  telemetry backends and Kafka services needed for the selected scenarios.
+- Verify traffic, logs, metrics, traces, and dependencies from a healthy system.
+- Measure actual RAM/CPU/disk use. Verify Docker data placement and resource limits;
+  free G: space is not automatically space available to a virtual disk on C:.
+- Document start, health, stop, and reset. Do not silently change WSL defaults or
+  Docker resource/storage settings.
 
-- The current [OpenTelemetry Docker guide](https://opentelemetry.io/docs/demo/docker-deployment/)
-  lists 6 GB RAM and 14 GB disk for the demo, with a smaller mode around 3 GB RAM.
-  Minimal mode excludes Kafka; the documented full setup uses multiple Compose
-  files to include observability. These requirements do not include this project's
-  additional processes. Local resources have not been confirmed.
-- The [fault reference](https://opentelemetry.io/docs/demo/feature-flags/) describes
-  `paymentUnreachable` as a bad checkout-side payment address and
-  `recommendationCacheFailure` as cache-driven memory growth. Ground truth should
-  distinguish the failing dependency symptom from its originating configuration.
-  Flag names and actual recovery behavior must be validated locally.
-- The [Hermes API guide](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server)
-  documents run endpoints and event streaming, while its default toolset includes
-  broad capabilities. An incident-only profile and application-owned action gate
-  are required for the intended boundary; HTTP integration alone does not supply it.
-- The [Hermes skills guide](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills)
-  documents `skills.write_approval` and profile skill controls. Verify the pinned
-  behavior and freeze operational skills during evals.
+**Exit:** reproducible healthy system and telemetry, with resource observations
+and any orchestration blockers documented.
 
-These primary sources were checked on the planning date. The earlier plan's
-company/job-market claims and issue-specific claims have not been revalidated and
-are not used as evidence for project outcomes or recruiting impact.
+### Milestone 2: scenarios, answer isolation, and contracts
 
-## Resume-ready completion criteria
+- Activate, observe, disable, and reset `paymentUnreachable`, `adHighCpu`,
+  `kafkaQueueProblems`, and `recommendationCacheFailure` on the pinned revision.
+  A flag's existence does not prove a repeatable, diagnosable, recoverable fault.
+- Define hidden causes, impacted operations, evidence predicates, allowed/forbidden
+  actions, observation windows, and recovery thresholds before prompt tuning.
+  Distinguish caller-side configuration from downstream failure symptoms.
+- Define assessment, evidence, tool-result, and public event contracts. Preserve
+  `investigate(incident)` through an adapter or an explicit migration.
+- Establish alert, topology, and recent-change sources. The demo has not been
+  shown to expose a deployment-history API; label any local journal lab-generated.
+- Reserve development/final comparison cases. Keep scenario answers, setup/reset
+  controls, fault labels, and grading data outside model context/tool/file access.
+  Review diagnostic change events for indirect answer leakage.
 
-- A new developer can run the documented local setup.
-- Four distinct faults have been investigated using live collected telemetry.
-- Assessments cite evidence that supports the stated level of certainty.
-- No remediation path executes without explicit, valid human approval.
-- Recovery is checked with fresh telemetry and predeclared criteria.
-- Baseline-versus-skills experiments include actual counts, failures, versions,
-  latency, usage/cost limits, and limitations.
-- The UI, demo, README, and portfolio story reflect what works.
-- Hermes/OpenTelemetry capabilities are attributed separately from application work.
+**Exit:** four documented healthy/fault/reset cycles plus versioned ground truth
+and contracts. Surface any required scenario substitution explicitly.
 
-Until those conditions are demonstrated, describe the repository as in progress.
+### Milestone 3: live evidence layer
+
+- Add bounded telemetry adapters with service, source timestamps, incident window,
+  query, result limits, raw observation, and retrieval event.
+- Assign immutable run-scoped evidence IDs and provenance. An evidence ID resolves
+  to something retrieved, not an assertion generated by the model.
+- Distinguish empty results, backend failure, truncation, and healthy observations.
+- Correlate metrics/logs/traces and topology. Review change/configuration exposure.
+- Define public hypothesis relationships: support, contradiction, missing evidence,
+  and unsupported claims. Do not invent calibrated confidence percentages.
+
+**Exit:** live observations resolve through evidence IDs; adapter/error checks
+use known lab observations.
+
+### Milestone 4: typed MCP investigation tools
+
+- Expose `list_active_alerts`, `query_metrics`, `search_logs`,
+  `find_anomalous_traces`, `get_trace`, `get_service_dependencies`, and
+  `get_recent_changes` through the Python MCP SDK.
+- Validate service names, query/windows, result sizes, errors, and timeouts.
+- Separate investigator tools from harness controls. No arbitrary shell,
+  unrestricted files, answer keys, or fault-control endpoints.
+- Audit requests/results and verify the exposed tool inventory.
+
+**Exit:** an MCP client retrieves correlated live evidence; malformed requests fail
+clearly and the investigator cannot retrieve the answer/control plane.
+
+### Milestone 5: Hermes, skills, and budgeted investigation
+
+- Establish provider/model access and a secure credential path before paid calls.
+  The user verified sufficient credits; this agent has not inspected the account.
+- Pin Hermes and validate its API/events/MCP/skill behavior behind an application
+  adapter. Use an isolated profile with incident tools and procedure reads only.
+- Disable broad terminal/filesystem access and autonomous skill/memory changes.
+  Start with triage and error/latency procedures; add resource, remediation, and
+  report procedures as those flows develop. Do not encode scenario answers.
+- Let the agent choose queries and test competing explanations. Validate output,
+  evidence references, and incomplete/error states in deterministic code.
+- Track the $100 project ceiling across development, retries, tuning, and evals.
+  Apply conservative admission estimates, in-flight reservations, per-run
+  turn/token/time limits, and reconciliation with actual usage. Estimates alone
+  do not guarantee an exact provider billing cap; document practical limits.
+- Record actual provider/model/settings, prompt/skill/tool versions, transcript,
+  usage, and latency. Freeze skills and use fresh sessions for controlled evals.
+
+**Exit:** a live CLI diagnosis cites collected evidence; missing/contradictory data
+and exhausted budget/iterations produce honest visible outcomes.
+
+### Milestone 6: API, storage, and streaming
+
+- Add FastAPI incident/run lifecycle, cancellation, validated results, and errors.
+- Persist incidents, observations, ordered events, calls, public hypotheses, skill
+  versions, proposals/decisions, actions, usage, and scores via SQLite/SQLAlchemy.
+- Translate Hermes events into application-owned SSE. Reconnect/reload must not
+  restart tools or lose evidence. Keep credentials server-side.
+- Represent interrupted runs honestly and retain event history for audit/playback.
+
+**Exit:** real state/evidence survive reload and reconnect without duplicate work
+or falsely completed runs.
+
+### Milestone 7: Incident Console and evidence inspection
+
+- Build the Next.js/React/TypeScript console: alert/status, dependencies, timeline,
+  tool activity, assessment, and clickable evidence from the real API.
+- Show concise public hypotheses, supporting/contradicting evidence, and missing
+  checks. Explain observations versus inferences without private reasoning.
+- Make query windows/provenance inspectable. Treat telemetry as untrusted text.
+- Handle loading/empty/partial/failed/cancelled states; establish keyboard access,
+  readable layout, and responsive behavior.
+
+**Exit:** a user can trace claims to observations and understand uncertainty.
+
+### Milestone 8: approval and controlled remediation
+
+- Add typed proposal and approved-execution entry points with predefined lab actions.
+  Present exact parameters and expected effect before the human decision.
+- Bind approval to incident/run, immutable proposal/parameters, decision, expiry,
+  and one-time execution state. Validate at the execution boundary.
+- Test direct calls, missing/expired/forged/wrong-incident authorization, changed
+  proposals, rejection, replay, retries, and concurrency.
+- Keep harness setup/reset separate. Neither model output nor telemetry can grant
+  approval or expand tool authority. Accept no caller-supplied shell commands.
+
+**Exit:** only valid approved actions execute; duplicate requests cannot execute
+the same proposal twice and invalid paths fail.
+
+### Milestone 9: recovery and post-incident report
+
+- Gather fresh telemetry after action and compare declared healthy/incident windows.
+  Account for Kafka backlog drain and memory-leak reset behavior.
+- Distinguish recovered, not recovered, and unverified. Show pre/post observations
+  beside the action result and assessment.
+- Report impact, timeline, supported cause, human decision, executed action,
+  observed recovery, uncertainty, and remaining follow-ups.
+- Verify the critical UI flow from alert through decision/action/recovery.
+
+**Exit:** successful and unsuccessful/unverified recovery are demonstrated; action
+completion is not presented as proof of system health.
+
+### Milestone 10: evaluations and diagnosis challenges
+
+- Extend the runner with isolated live setup/reset, fresh sessions, deterministic
+  graders, and durable artifacts. Label live, recorded, and fixture modes.
+- Compare the same model/tools/settings without skills and with versioned skills;
+  keep the deterministic starter as a separate reference.
+- Cover four faults, healthy operation, missing evidence, and malicious log content.
+  Test approval enforcement independently of model cooperation.
+- Add evidence removal, plausible unrelated changes, and at least one validated
+  paired case with similar symptoms but different causes. Do not call an
+  unvalidated fixture a live fault or fabricate missing observability.
+- Grade cause/causal and impacted service, citation support, required evidence,
+  skill selection, repeated calls, forbidden actions, recovery, latency, and cost.
+  Evidence-ID existence alone does not prove support.
+- Predeclare trials using pricing, pilot usage, and remaining budget. Report counts,
+  failures, incomplete runs, and uncertainty. Tune on development cases, then freeze
+  final comparison inputs. Do not select only successful trials.
+
+**Exit:** reproducible comparison artifacts expose failures and when the investigator
+revises/abstains, without invented improvement claims.
+
+### Milestone 11: Eval Dashboard and Skills screen
+
+- Display baseline/skills comparisons, scenario counts, safety failures, evidence
+  quality, calls, latency, usage/cost, trial conditions, and limitations.
+- Inspect failed runs through their evidence, calls, decisions, and scores.
+- Show skill description/trigger, version/hash/commit, changes, and associated evals.
+  Label incomparable or insufficient before/after experiments honestly.
+
+**Exit:** all three core screens use stored application data and expose results,
+failures, and version history clearly.
+
+### Milestone 12: application hardening and reproducibility
+
+- Add labeled recorded playback that cannot trigger inference or action execution.
+- Verify clean setup and the complete alert-to-recovery/eval flows. Finish
+  accessibility, responsive, error, interruption, and budget-limit states.
+- Run relevant backend, adapter, MCP, policy, API, and critical UI checks.
+- Document actual results, versions, resources, limitations, and component ownership.
+  Explain application work separately from Hermes/OpenTelemetry capabilities.
+- Include architecture and an optional short project walkthrough. Portfolio website
+  construction and a separate portfolio case study are outside this scope.
+
+**Exit:** a new developer can reproduce four live fault investigations and inspect
+evidence, decisions, recovery, and evaluations from documented steps.
+
+## Recommended technology and boundaries
+
+Retain the reference architecture: Next.js/React/TypeScript/Tailwind/shadcn/ui;
+FastAPI/Pydantic; Hermes behind an adapter; Python MCP; OpenTelemetry demo/backends;
+SQLite/SQLAlchemy; JSON/YAML scenarios and code-based graders; Docker Compose;
+Pytest and focused UI checks. Preserve the starter's unittest checks.
+
+The full three screens remain; there is no schedule-driven cut. Hermes is the
+proposed runtime, not a separately confirmed user mandate. Verify fit before
+integration and surface any necessary architecture change explicitly.
+
+Exclude extra agents, a vector database, production cloud/telemetry credentials,
+arbitrary terminal execution, autonomous skill edits, Kubernetes, authentication,
+multi-organization features, and cloud hosting from the initial build. AI-specific
+faults and PostgreSQL are later options when justified.
+
+## Verified facts and references
+
+WSL package 3.0.3.0 and Ubuntu using WSL 2 are verified. Docker Desktop 4.30.0 and
+Compose 2.27.0 are installed; the engine was stopped. Windows reports 15.69 GiB
+physical RAM; available disk is about 290.65 GiB on G: and 87.98 GiB on C:.
+A live full-stack capacity test has not run. See the environment record.
+
+The user checked the billing dashboard and confirmed sufficient credits for the
+$100 ceiling. This is user-reported verification, not agent inspection. Provider,
+model, and credential setup must be established before paid integration. Keep
+private balances, account identifiers, screenshots, and keys out of the repository.
+
+Primary references checked during planning:
+
+- [OpenTelemetry Docker deployment](https://opentelemetry.io/docs/demo/docker-deployment/):
+  documented resources/full Compose behavior; minimal mode excludes Kafka.
+- [OpenTelemetry fault reference](https://opentelemetry.io/docs/demo/feature-flags/):
+  `paymentUnreachable` changes a checkout-side address; validate all fault behavior.
+- [Hermes API](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server)
+  and [skills](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills):
+  HTTP/SSE and procedure controls; restrict the actual runtime capabilities.
+
+The original plan's job-market and issue-specific claims were not revalidated;
+they are not evidence of application quality or recruiting outcomes.
+
+## Completion standard
+
+A new developer can reproduce the application; four live faults are investigated
+with supported evidence; healthy, ambiguous, missing, and adversarial cases are
+handled honestly; no action bypasses approval; fresh telemetry verifies recovery;
+comparisons report actual trials, failures, versions, and usage; and the UI/docs
+match demonstrated behavior. Add milestones if needed to meet these conditions.
+Until then, describe the project as in progress.
